@@ -7,7 +7,7 @@ h1{font-size:28px}label{display:block;margin:18px 0 6px;font-weight:600;color:va
 input,select{width:100%;padding:12px;font-size:16px;border:1px solid var(--line);border-radius:10px;box-sizing:border-box;background:var(--bg);color:var(--fg)}
 button{width:100%;margin-top:24px;padding:16px;font-size:18px;font-weight:700;color:#fff;background:var(--acc);border:0;border-radius:12px;cursor:pointer}
 button:disabled{opacity:.5;cursor:wait}.box{background:var(--box);border-radius:12px;padding:16px;margin:16px 0}
-table{border-collapse:collapse;width:100%;margin:8px 0}td,th{padding:4px;border-bottom:1px solid var(--line);text-align:left}td input{padding:8px;font-size:15px}button.sub{width:auto;margin:8px 8px 0 0;padding:10px 16px;font-size:15px;background:var(--mut)}hr{border:0;border-top:1px solid var(--line);margin:32px 0}a.dl{display:block;margin:10px 0;font-weight:700;color:var(--acc)}.err{color:#d33}small{color:var(--mut)}</style></head><body>
+table{border-collapse:collapse;width:100%;margin:8px 0}td,th{padding:4px;border-bottom:1px solid var(--line);text-align:left}td input{padding:8px;font-size:15px}button.sub{width:auto;margin:8px 8px 0 0;padding:10px 16px;font-size:15px;background:var(--mut)}hr{border:0;border-top:1px solid var(--line);margin:32px 0}label.chk{display:flex;gap:8px;align-items:center;margin:0;color:var(--fg);font-weight:600}label.chk input{width:auto}.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.cat{background:var(--box);border-radius:12px;padding:12px}.cat h4{margin:0 0 8px}.rw{display:flex;gap:6px;margin:4px 0}.rw input{padding:8px;font-size:15px}.rw .rx{width:40px;margin:0;padding:6px}.tot{color:var(--mut);margin-top:6px}.checks{display:flex;flex-wrap:wrap;gap:6px 16px;margin:8px 0}a.dl{display:block;margin:10px 0;font-weight:700;color:var(--acc)}.err{color:#d33}small{color:var(--mut)}</style></head><body>
 <h1>헌금 변환</h1>
 <p>은행 거래내역 엑셀을 올리면 디모데 업로드 양식으로 바꿔드립니다.<br><small>변환은 이 컴퓨터 안에서만 이루어지고, 파일은 어디에도 전송·저장되지 않습니다.</small></p>
 <label for="f">은행 거래내역 엑셀</label><input id="f" type="file" accept=".xlsx">
@@ -20,6 +20,16 @@ table{border-collapse:collapse;width:100%;margin:8px 0}td,th{padding:4px;border-
 <button id="ocr" class="sub" disabled>사진 읽기</button><span id="ocrmsg"><small></small></span>
 <table id="tb" hidden><thead><tr><th>입금자(기재내용)</th><th>금액</th><th></th></tr></thead><tbody></tbody></table>
 <div id="tbbtn" hidden><button id="addrow" class="sub">줄 추가</button><button id="go2" class="sub" style="background:var(--acc)">표 내용으로 변환</button></div>
+<hr><label class="chk" for="dtoggle"><input type="checkbox" id="dtoggle">교육국 (유년부·유치부 등 부서헌금)</label>
+<div id="dbody" hidden>
+<p><small>부서에서 받은 헌금을 종이양식과 같은 방식으로 입력합니다. 이 컴퓨터 안에서만 처리됩니다.</small></p>
+<label for="dept">부서</label><select id="dept"><option>태영아국</option><option>유아국</option><option>유치국</option><option selected>유년국</option><option>초등국</option><option>중등국</option><option>고등국</option><option>대학국</option><option>사랑국</option></select>
+<label for="ddate">입력일자</label><input id="ddate" type="date">
+<label for="dprep">담당자(이름) — 필수</label><input id="dprep" type="text" placeholder="예: 김유아">
+<h3>헌금 목록 — 체크한 항목만 아래 입력칸이 보입니다</h3><div class="checks" id="dchecks"></div>
+<div class="cols" id="dcols"></div>
+<p><b>합계 <span id="dgrand">0</span>원</b></p>
+<button id="go3">교육국 변환</button></div>
 <p id="err" class="err"></p><div id="out"></div>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
@@ -28,7 +38,7 @@ const FILES={"app/convert.py": "IyAtKi0gY29kaW5nOiB1dGYtOCAtKi0KIiIi7J2A7ZaJIOqx
 const PY=`
 import sys, json, io
 sys.path.insert(0, "/")
-from app.convert import (RULES_PATH, Rules, convert_deposits, read_bank, read_bank_memos, write_upload, write_review)
+from app.convert import (convert_dept_rows, match_item_code, dept_dup_key, DeptSheetError, RULES_PATH, Rules, convert_deposits, read_bank, read_bank_memos, write_upload, write_review)
 def run(bu, gj):
     rules = Rules(RULES_PATH)
     rows, date = read_bank("/in.xlsx")
@@ -36,6 +46,26 @@ def run(bu, gj):
     write_upload("/up.xlsx", res["records"], rules, gyejeonja=gj, yebae=bu)
     write_review("/rv.xlsx", res["reviews"], res["records"], res["total_count"], res["total_amount"], res["by_item"], res["dup"])
     return json.dumps({"date": date, "count": res["total_count"], "amount": res["total_amount"], "review": res["review_count"]})
+def run_dept(payload_json):
+    p = json.loads(payload_json)
+    rules = Rules(RULES_PATH)
+    dept = p["dept"]
+    cats = []
+    for c in p["cats"]:
+        rows = [(n, int(a)) for n, a in c["rows"]]
+        if rows:
+            cats.append({"항목명": c["label"], "rows": rows, "합계": None, "인원수": None,
+                         "코드매칭명": dept if c["key"] == "sunday" else c["label"]})
+    try:
+        y, m, d = p["date"].split("-"); dl = "%d/%d" % (int(m), int(d))
+    except Exception:
+        dl = p["date"]
+    try:
+        res = convert_dept_rows(dept, dl, cats, rules)
+    except DeptSheetError as e:
+        return json.dumps({"error": str(e)})
+    write_upload("/up.xlsx", res["records"], rules, gyejeonja=rules.gyejeonja, yebae=dept, dup_key=dept_dup_key)
+    return json.dumps({"count": res["total_count"], "amount": res["total_amount"]})
 def run_rows(rows_json, date, bu, gj):
     rules = Rules(RULES_PATH)
     rows = [(i + 1, str(n).strip(), int(a)) for i, (n, a) in enumerate(json.loads(rows_json))]
@@ -107,5 +137,41 @@ $("go2").onclick=()=>{$("err").textContent="";
   if(!rows.length){$("err").textContent="변환할 줄이 없습니다.";return;}
   try{const d=new Date(),date=""+d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
     show(JSON.parse(py.globals.get("run_rows")(JSON.stringify(rows),date,$("bu").value,$("gj").value)));
+  }catch(e){$("err").textContent="변환 중 오류가 났습니다.";console.error(e);}};
+
+/* ---- 교육국 부서헌금 ---- */
+const SLOTS=[["sunday","주일헌금"],["tithe","십일조"],["mission","해외선교"],["thanks","감사"],["media","미디어선교"],["indigent","미자립선교"],["scholarship","장학헌금"],["welfare","복지치유"],["sanctuary","본당헌당"],["special","특별헌금"],["festival","절기헌금"]];
+const DEFAULT_ON=new Set(["sunday","tithe","mission","thanks"]);
+const FEST=["성탄절","송구영신","신년감사","부활절","맥추절","추수감사"];
+const num=v=>{const n=parseInt(String(v||"").replace(/[^0-9]/g,""),10);return isNaN(n)?0:n;};
+function grand(){let g=0;document.querySelectorAll("#dcols .ra2").forEach(e=>g+=num(e.value));$("dgrand").textContent=g.toLocaleString("ko-KR");
+  document.querySelectorAll("#dcols .cat").forEach(c=>{let t=0;c.querySelectorAll(".ra2").forEach(e=>t+=num(e.value));c.querySelector(".ct").textContent=t.toLocaleString("ko-KR");});}
+function addRow2(list,focus){const r=document.createElement("div");r.className="rw";
+  r.innerHTML='<input class="rn2" placeholder="이름"><input class="ra2" inputmode="numeric" placeholder="금액"><button class="sub rx" type="button" aria-label="이 줄 삭제">×</button>';
+  r.querySelector(".rx").onclick=()=>{r.remove();grand();};r.querySelector(".ra2").oninput=grand;list.append(r);if(focus)r.querySelector(".rn2").focus();}
+SLOTS.forEach(([k,l])=>{
+  const lab=document.createElement("label");lab.className="chk";lab.innerHTML='<input type="checkbox" data-k="'+k+'"'+(DEFAULT_ON.has(k)?" checked":"")+'>'+l;$("dchecks").append(lab);
+  const col=document.createElement("div");col.className="cat";col.id="col-"+k;col.hidden=!DEFAULT_ON.has(k);
+  col.innerHTML="<h4>"+l+"</h4>"+(k==="festival"?'<select class="fs"><option value="">— 절기를 골라주세요 —</option>'+FEST.map(f=>"<option>"+f+"</option>").join("")+"</select>":"")+'<div class="lst"></div><button type="button" class="sub add">+ 추가</button><div class="tot">총 <span class="ct">0</span>원</div>';
+  const lst=col.querySelector(".lst");addRow2(lst);col.querySelector(".add").onclick=()=>addRow2(lst,true);$("dcols").append(col);
+  lab.querySelector("input").onchange=e=>{col.hidden=!e.target.checked;};});
+$("dtoggle").onchange=e=>{$("dbody").hidden=!e.target.checked;};
+$("ddate").value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+$("go3").onclick=()=>{$("err").textContent="";$("out").innerHTML="";
+  if(!$("dprep").value.trim()){$("err").textContent="담당자 이름을 입력하세요.";return;}
+  const cats=[];let bad="";
+  SLOTS.forEach(([k,l])=>{const col=$("col-"+k);if(col.hidden)return;let label=l;
+    if(k==="festival"){const f=col.querySelector(".fs").value;label=f||l;}
+    const rows=[];col.querySelectorAll(".rw").forEach(r=>{const n=r.querySelector(".rn2").value.trim(),a=num(r.querySelector(".ra2").value);
+      if(n&&a>0)rows.push([n,a]);else if(n||r.querySelector(".ra2").value.trim())bad="'"+l+"' 칸에 이름 또는 금액이 비어 있는 줄이 있습니다.";});
+    if(rows.length)cats.push({key:k,label,rows});});
+  if(bad){$("err").textContent=bad;return;}
+  if(!cats.length){$("err").textContent="입력된 항목이 하나도 없습니다.";return;}
+  try{const r=JSON.parse(py.globals.get("run_dept")(JSON.stringify({dept:$("dept").value,date:$("ddate").value,cats})));
+    if(r.error){$("err").textContent="확인이 필요합니다: "+r.error;return;}
+    const d=$("ddate").value.replace(/-/g,"");const box=document.createElement("div");box.className="box";
+    box.innerHTML="<b>"+$("dept").value+" "+d+"</b> · "+r.count+"건 · "+r.amount.toLocaleString()+"원";
+    box.append(save("/up.xlsx","디모데업로드_"+$("dept").value+"_"+d+".xlsx"));
+    const s=document.createElement("small");s.textContent="받은 파일은 이 컴퓨터에 저장하세요. 화면을 닫으면 다시 받을 수 없습니다.";box.append(s);$("out").append(box);
   }catch(e){$("err").textContent="변환 중 오류가 났습니다.";console.error(e);}};
 </script></body></html>
