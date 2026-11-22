@@ -1,5 +1,6 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>디모데양식_파일변환</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&display=swap">
 <style>:root{--bg:#fbfaf7;--fg:#222;--mut:#6b6558;--line:#d9d2c3;--acc:#0a78b5;--box:#f4f1ea}
 @media(prefers-color-scheme:dark){:root{--bg:#1c1b19;--fg:#eee;--mut:#a8a193;--line:#3b3832;--acc:#3aa0dc;--box:#262420;color-scheme:dark}}
 body{font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--fg);max-width:720px;margin:32px auto;padding:0 16px}
@@ -7,8 +8,14 @@ h1{font-size:28px}label{display:block;margin:18px 0 6px;font-weight:600;color:va
 input,select{width:100%;padding:12px;font-size:16px;border:1px solid var(--line);border-radius:10px;box-sizing:border-box;background:var(--bg);color:var(--fg)}
 button{width:100%;margin-top:24px;padding:16px;font-size:18px;font-weight:700;color:#fff;background:var(--acc);border:0;border-radius:12px;cursor:pointer}
 button:disabled{opacity:.5;cursor:wait}.box{background:var(--box);border-radius:12px;padding:16px;margin:16px 0}
-table{border-collapse:collapse;width:100%;margin:8px 0}td,th{padding:4px;border-bottom:1px solid var(--line);text-align:left}td input{padding:8px;font-size:15px}button.sub{width:auto;margin:8px 8px 0 0;padding:10px 16px;font-size:15px;background:var(--mut)}hr{border:0;border-top:1px solid var(--line);margin:32px 0}label.chk{display:flex;gap:8px;align-items:center;margin:0;color:var(--fg);font-weight:600}label.chk input{width:auto}.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.cat{background:var(--box);border-radius:12px;padding:12px}.cat h4{margin:0 0 8px}.rw{display:flex;gap:6px;margin:4px 0}.rw input{padding:8px;font-size:15px}.rw .rx{width:40px;margin:0;padding:6px}.tot{color:var(--mut);margin-top:6px}.checks{display:flex;flex-wrap:wrap;gap:6px 16px;margin:8px 0}a.dl{display:block;margin:10px 0;font-weight:700;color:var(--acc)}.err{color:#d33}small{color:var(--mut)}</style></head><body>
-<h1>헌금 변환</h1>
+table{border-collapse:collapse;width:100%;margin:8px 0}td,th{padding:4px;border-bottom:1px solid var(--line);text-align:left}td input{padding:8px;font-size:15px}button.sub{width:auto;margin:8px 8px 0 0;padding:10px 16px;font-size:15px;background:var(--mut)}hr{border:0;border-top:1px solid var(--line);margin:32px 0}label.chk{display:flex;gap:8px;align-items:center;margin:0;color:var(--fg);font-weight:600}label.chk input{width:auto}.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.cat{background:var(--box);border-radius:12px;padding:12px}.cat h4{margin:0 0 8px}.rw{display:flex;gap:6px;margin:4px 0}.rw input{padding:8px;font-size:15px}.rw .rx{width:40px;margin:0;padding:6px}.tot{color:var(--mut);margin-top:6px}.checks{display:flex;flex-wrap:wrap;gap:6px 16px;margin:8px 0}a.dl{display:block;margin:10px 0;font-weight:700;color:var(--acc)}.err{color:#d33}small{color:var(--mut)}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:20px;text-align:center;margin-bottom:20px;box-shadow:0 1px 2px rgba(38,36,31,.04),0 8px 24px -12px rgba(38,36,31,.18)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0 20px}.stat-box{background:var(--box);border:1px solid var(--line);border-radius:10px;padding:14px}
+.stat-box .label{font-size:13px;color:var(--mut);margin:0 0 4px}.stat-box .value{font-variant-numeric:tabular-nums;font-size:28px;font-weight:700;margin:0}
+a.big-button{display:block;width:100%;box-sizing:border-box;height:56px;line-height:56px;font-size:17px;font-weight:700;background:var(--acc);color:#fff;text-align:center;border-radius:10px;text-decoration:none;margin:0 0 10px}
+#result h1{font-family:Fraunces,Georgia,serif;font-weight:500}#result table{font-size:14px}#result .hint{color:var(--mut);font-size:14px}tr.dupe{background:#fff3cd;color:#26241f}
+</style></head><body>
+<div id="main"><h1>헌금 변환</h1>
 <p>은행 거래내역 엑셀을 올리면 디모데 업로드 양식으로 바꿔드립니다.<br><small>변환은 이 컴퓨터 안에서만 이루어지고, 파일은 어디에도 전송·저장되지 않습니다.</small></p>
 <label for="f">은행 거래내역 엑셀</label><input id="f" type="file" accept=".xlsx">
 <label for="bu">부</label><select id="bu"><option>2부</option><option>3부</option><option selected>4부</option><option>5부</option></select>
@@ -31,6 +38,7 @@ table{border-collapse:collapse;width:100%;margin:8px 0}td,th{padding:4px;border-
 <p><b>합계 <span id="dgrand">0</span>원</b></p>
 <button id="go3">교육국 변환</button></div>
 <p id="err" class="err"></p><div id="out"></div>
+</div><div id="result" hidden></div>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script>
@@ -38,14 +46,14 @@ const FILES={"app/convert.py": "IyAtKi0gY29kaW5nOiB1dGYtOCAtKi0KIiIi7J2A7ZaJIOqx
 const PY=`
 import sys, json, io
 sys.path.insert(0, "/")
-from app.convert import (convert_dept_rows, match_item_code, dept_dup_key, DeptSheetError, RULES_PATH, Rules, convert_deposits, read_bank, read_bank_memos, write_upload, write_review)
+from app.convert import (reference_rows, convert_dept_rows, match_item_code, dept_dup_key, DeptSheetError, RULES_PATH, Rules, convert_deposits, read_bank, read_bank_memos, write_upload, write_review)
 def run(bu, gj):
     rules = Rules(RULES_PATH)
     rows, date = read_bank("/in.xlsx")
     res = convert_deposits(rows, rules, read_bank_memos("/in.xlsx"))
     write_upload("/up.xlsx", res["records"], rules, gyejeonja=gj, yebae=bu)
     write_review("/rv.xlsx", res["reviews"], res["records"], res["total_count"], res["total_amount"], res["by_item"], res["dup"])
-    return json.dumps({"date": date, "count": res["total_count"], "amount": res["total_amount"], "review": res["review_count"]})
+    return json.dumps({"date": date, "count": res["total_count"], "amount": res["total_amount"], "review": res["review_count"], "ref": reference_rows(res["records"], res["dup"])})
 def run_dept(payload_json):
     p = json.loads(payload_json)
     rules = Rules(RULES_PATH)
@@ -65,14 +73,14 @@ def run_dept(payload_json):
     except DeptSheetError as e:
         return json.dumps({"error": str(e)})
     write_upload("/up.xlsx", res["records"], rules, gyejeonja=rules.gyejeonja, yebae=dept, dup_key=dept_dup_key)
-    return json.dumps({"count": res["total_count"], "amount": res["total_amount"]})
+    return json.dumps({"count": res["total_count"], "amount": res["total_amount"], "review": 0, "ref": reference_rows(res["records"], res["dup"], dept_dup_key)})
 def run_rows(rows_json, date, bu, gj):
     rules = Rules(RULES_PATH)
     rows = [(i + 1, str(n).strip(), int(a)) for i, (n, a) in enumerate(json.loads(rows_json))]
     res = convert_deposits(rows, rules)
     write_upload("/up.xlsx", res["records"], rules, gyejeonja=gj, yebae=bu)
     write_review("/rv.xlsx", res["reviews"], res["records"], res["total_count"], res["total_amount"], res["by_item"], res["dup"])
-    return json.dumps({"date": date, "count": res["total_count"], "amount": res["total_amount"], "review": res["review_count"]})
+    return json.dumps({"date": date, "count": res["total_count"], "amount": res["total_amount"], "review": res["review_count"], "ref": reference_rows(res["records"], res["dup"])})
 `;
 const $=id=>document.getElementById(id); let py;
 (async()=>{try{
@@ -169,9 +177,31 @@ $("go3").onclick=()=>{$("err").textContent="";$("out").innerHTML="";
   if(!cats.length){$("err").textContent="입력된 항목이 하나도 없습니다.";return;}
   try{const r=JSON.parse(py.globals.get("run_dept")(JSON.stringify({dept:$("dept").value,date:$("ddate").value,cats})));
     if(r.error){$("err").textContent="확인이 필요합니다: "+r.error;return;}
-    const d=$("ddate").value.replace(/-/g,"");const box=document.createElement("div");box.className="box";
-    box.innerHTML="<b>"+$("dept").value+" "+d+"</b> · "+r.count+"건 · "+r.amount.toLocaleString()+"원";
-    box.append(save("/up.xlsx","디모데업로드_"+$("dept").value+"_"+d+".xlsx"));
-    const s=document.createElement("small");s.textContent="받은 파일은 이 컴퓨터에 저장하세요. 화면을 닫으면 다시 받을 수 없습니다.";box.append(s);$("out").append(box);
+    const d=$("ddate").value.replace(/-/g,"");r.date=d;showResult(r,{line:d+" · "+$("dept").value+" · 계전자 안지원",date:d,upname:"디모데업로드_"+$("dept").value+"_"+d+".xlsx"});
   }catch(e){$("err").textContent="변환 중 오류가 났습니다.";console.error(e);}};
+
+function showResult(r,ctx){
+  const esc=t=>String(t==null?"":t).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+  const R=$("result");R.innerHTML="";
+  const h=document.createElement("h1");h.textContent="변환 완료";
+  const card=document.createElement("div");card.className="card";
+  card.innerHTML="<p>"+esc(ctx.line)+"</p><div class='stat-grid'><div class='stat-box'><p class='label'>건수</p><p class='value'>"+r.count.toLocaleString()+"건</p></div>"
+    +"<div class='stat-box'><p class='label'>합계</p><p class='value'>"+r.amount.toLocaleString()+"원</p></div>"
+    +"<div class='stat-box'><p class='label'>검토필요</p><p class='value'>"+r.review.toLocaleString()+"건</p></div></div>";
+  const a1=save("/up.xlsx",ctx.upname);a1.className="big-button";a1.textContent="디모데 업로드 파일 다운로드";card.append(a1);
+  if(r.review>0){const a2=save("/rv.xlsx","검토필요_"+ctx.date+".xlsx");a2.className="big-button";a2.textContent="검토필요 파일 다운로드";card.append(a2);}
+  const sm=document.createElement("small");sm.textContent="받은 파일은 이 컴퓨터에 저장하세요. 화면을 닫으면 다시 받을 수 없습니다.";card.append(sm);
+  R.append(h,card);
+  const h2=document.createElement("h2");h2.textContent="동명이인 구분표";R.append(h2);
+  const hint=document.createElement("p");hint.className="hint";hint.textContent="디모데 업로드 창과 이 화면을 나란히 두고, 팝업이 뜨면 여기서 같은 행을 찾아 고르세요.";R.append(hint);
+  if(!r.ref||!r.ref.length){const p=document.createElement("p");p.textContent="구분이 필요한 사람이 없습니다.";R.append(p);}
+  else{const t=document.createElement("table");
+    t.innerHTML="<thead><tr><th>행</th><th>이름</th><th>구분 정보</th><th>항목</th><th>금액</th><th>같은 이름</th></tr></thead><tbody>"+r.ref.map(x=>
+      "<tr"+(x["같은이름표시"]?" class='dupe'":"")+"><td>"+x["업로드행"]+"</td><td>"+esc(x["이름"])+"</td><td>"+esc(x["식별자"])+(x["배우자"]?" · 배우자 "+esc(x["배우자"]):"")+"</td><td>"+esc(x["항목명"])+"</td><td>"+x["금액"].toLocaleString()+"원</td><td>"+esc(x["같은이름표시"])+"</td></tr>").join("")+"</tbody>";
+    const w=document.createElement("div");w.style.overflowX="auto";w.append(t);R.append(w);}
+  const back=document.createElement("p");const b=document.createElement("a");b.href="#";b.textContent="다른 파일 변환하기";
+  b.onclick=e=>{e.preventDefault();R.hidden=true;$("main").hidden=false;$("out").innerHTML="";window.scrollTo(0,0);};back.append(b);R.append(back);
+  $("main").hidden=true;R.hidden=false;window.scrollTo(0,0);
+}
+show=function(r){showResult(r,{line:r.date+" · "+$("bu").value+" · 계전자 "+$("gj").value,date:r.date,upname:"디모데업로드_"+r.date+".xlsx"});};
 </script></body></html>
